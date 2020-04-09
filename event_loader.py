@@ -1,4 +1,6 @@
 import os, glob, re
+from collections import OrderedDict
+import pandas as pd
 import tensorflow as tf
 
 class event_loader():
@@ -11,6 +13,7 @@ class event_loader():
         dirs = self.logdir.split(',')
         aliases = []
         pathes = []
+        groups = []
         for title in dirs:
             if len(title.split(':')) == 1:
                 if title[-1] != '/': title += '/'
@@ -22,23 +25,50 @@ class event_loader():
                 curr_path = splited[1] + '/' if splited[1][-1] != '/' else ''
 
             path_list, simple_path = self._search_folder(self.rootpath+curr_path, curr_alias)
+
             
             for p, n in zip(path_list, simple_path):
                 if regex.search(n) is not None: 
                     pathes.append(p)
                     aliases.append(n)
+                    groups.append(curr_alias)
+                    # if 'mlp_mono' in n: groups.append('mono')
+                    # elif 'mlp_bino' in n: groups.append('bino')
+                    # else: groups.append('else')
 
         self.pathes = pathes.copy()
         self.aliases = aliases.copy()
+        self.groups = groups.copy()
 
-        return pathes, aliases
+        return groups, pathes, aliases
 
 
-    def load(self):
-        pass
+    def load(self, tags_regex, down_sample, interpolation_kwargs={"method": "linear", "limit_direction": "forward"}):
+        regex = re.compile(tags_regex)
+        odict = OrderedDict()
         
-            
+        for event_path, event_aliases, event_group in zip(self.pathes, self.aliases, self.groups):
+            print('Loading %s of group %s' % (event_aliases, event_group))
+            odict[event_aliases] = {'start_time': None, 'data': {}, 'event_path': event_path, 'groups': event_group}
+            for i, event in enumerate(tf.compat.v1.train.summary_iterator(event_path)):
+                if i == 0: odict[event_aliases]['start_time'] = event.wall_time
+                elif i % down_sample == 0:
+                    for value in event.summary.value:
+                        if regex.search(value.tag) is not None:
+                            if event.step not in odict[event_aliases]['data'].keys():
+                                odict[event_aliases]['data'][event.step] = {}
+                                odict[event_aliases]['data'][event.step]['wall_time'] = event.wall_time
+                                odict[event_aliases]['data'][event.step]['relative'] = event.wall_time - odict[event_aliases]['start_time']
+                            odict[event_aliases]['data'][event.step][value.tag] = value.simple_value
 
+            odict[event_aliases]['data'] = pd.DataFrame.from_dict(odict[event_aliases]['data'], orient='index')
+            # print(odict[event_aliases]['data'])
+            # print(odict[event_aliases]['data'].isnull().sum())
+            odict[event_aliases]['data'] = odict[event_aliases]['data'].interpolate(**interpolation_kwargs)
+            # print(odict[event_aliases]['data'])
+            # print(odict[event_aliases]['data'].isnull().sum())
+        
+        return odict
             
 
     def _search_folder(self, path, alias):
