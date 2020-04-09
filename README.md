@@ -22,33 +22,33 @@ For further information, please refer to [this page](https://pandas.pydata.org/p
 * `python3 main.py --rootpath /path/to/simulations/ --logdir 0404:sim0404,0406:sim0406 --regex "train" --tags "performance" -y --use_min_max --save_data tmp --moving_average 0.9 --title performances`
 ![example1](https://github.com/showaykerker/tensorboard2matplot/blob/master/assets/example1.png)
 
-* `python3 main.py --rootpath /path/to/simulations/ --logdir 0404:sim0404,0406:sim0406 --regex "train" --tags "performance" --load_data tmp.pkl --moving_average 0.96 --title performances`
+* `python3 main.py --load_data tmp.pkl --moving_average 0.96 --title performances`
 ![example2](https://github.com/showaykerker/tensorboard2matplot/blob/master/assets/example2.png)
 
-* `python3 main.py --rootpath /path/to/simulations/ --logdir mono:sim_mono,bino:sim_bino --regex "train" --tags "performance" -y --save_data example --moving_average 0.9 --title performances`
+* `python3 main.py --rootpath /path/to/simulations/ --logdir mono:sim_mono,bino:sim_bino --regex "train" --tags "performance" --save_data example --moving_average 0.9 --title performances`
 ![example3](https://github.com/showaykerker/tensorboard2matplot/blob/master/assets/example3.png)
 
 ### Arguments
-#### Loading Events
-* rootpath: [str] This will append in front of logdirs.
-* logdir: [str] Same as tensorboarg commands for --logdir. The program will search for events file recurrently under the given directory.
-* regex: [str] Same as tensorboard runs filter, use regex to decide which event file(s) are being read.
-* tags: [str] Same as tensorboard tags filter, use regex to decide which tag(s) are being plot.
-* downsample: [int] Down sampling by loading only every N iters.
-* interpolation_method: [str] Interpolate method for `pandas.DataFrame.interpolate`.
-* interpolation_direction: [str] Interpolate direction for `pandas.DataFrame.interpolate`.
+* Loading Events
+	* **rootpath**: [str] This will append in front of logdirs.
+	* **logdir**: [str] Same as tensorboarg commands for --logdir. The program will search for events file recurrently under the given directory.
+	* **regex**: [str] Same as tensorboard runs filter, use regex to decide which event file(s) are being read.
+	* **tags**: [str] Same as tensorboard tags filter, use regex to decide which tag(s) are being plot.
+	* **downsample**: [int] Down sampling by loading only every N iters.
+	* **interpolation_method**: [str] Interpolate method for `pandas.DataFrame.interpolate`.
+	* **interpolation_direction**: [str] Interpolate direction for `pandas.DataFrame.interpolate`.
 
-#### Running Options
-* title: [str] Title on the plot.
-* y: Don't confirm loading events list after searching by regex. *[optional]*
+* Running Options
+	* **title**: [str] Title on the plot.
+	* **y**: Don't confirm loading events list after searching by regex. *[optional]*
 
-#### File IO
-* save_data: [str] If given, saving loaded data extract from events to this path.
-* load_data: [str] If given, loading data from this path reather than events.
+* File IO
+	* **save_data**: [str] If given, saving loaded data extract from events to this path.
+	* **load_data**: [str] If given, loading data from this path reather than events.
 
-#### Plotting Configuration
-* use_relative_time: Use relative time reather than iters. Not functioning well. *[optional]*
-* use_min_max: Plot range using min max reather than using variance. *[optional]*
-* moving_average: [float] Smoothing data.
+* Plotting Configuration
+	* **use_relative_time**: Use relative time reather than iters. Not functioning well. *[optional]*
+	* **use_min_max**: Plot range using min max reather than using variance. *[optional]*
+	* **moving_average**: [float] Smoothing data.
 
 
