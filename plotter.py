@@ -51,14 +51,16 @@ class plotter():
 			elif n_idx > len(df): 
 				n_idx = len(df)
 				idx_names = df.index if not self.use_relative_time else df['relative'].to_numpy()/3600
-			try: self.seperated[v["groups"]].append(df)
-			except KeyError: self.seperated[v["teams"]].append(df)
+			self.seperated[v["groups"]].append(df)
+			
 
 		label_names = list(df.columns)
 		try:
 			label_names.remove('relative')
 			label_names.remove('wall_time')
 		except: pass
+
+		print('Plotting Labels:', label_names)
 
 		self._plot(n_idx, idx_names, label_names, suptitle, moving_avg)
 			
@@ -73,22 +75,26 @@ class plotter():
 			# key: group_name
 			# value: list of df of given group_name
 			values_tmp = np.zeros((len(label_names), len(dfs), n_idx))
-			for i_lbl, lbl in enumerate(label_names):
-				
-				for i_df, df in enumerate(dfs):
-					values_tmp[i_lbl, i_df] = df[lbl].to_numpy()[:n_idx]
+			try:
+				for i_lbl, lbl in enumerate(label_names):
+						
+					for i_df, df in enumerate(dfs):
+						values_tmp[i_lbl, i_df] = df[lbl].to_numpy()[:n_idx]
 
-			values[i_group, :, 0] = values_tmp.mean(axis=1)
+				values[i_group, :, 0] = values_tmp.mean(axis=1)
 
-			for i in range(values.shape[-1]-1):
-				values[i_group, :, 0, i+1] = values[i_group, :, 0, i+1] * (1-moving_avg) + values[i_group, :, 0, i] * moving_avg
-				
+				for i in range(values.shape[-1]-1):
+					values[i_group, :, 0, i+1] = values[i_group, :, 0, i+1] * (1-moving_avg) + values[i_group, :, 0, i] * moving_avg
+					
 
-			if self.use_min_max:
-				values[i_group, :, 1] = values_tmp.min(axis=1)
-				values[i_group, :, 2] = values_tmp.max(axis=1)
-			else:
-				values[i_group, :, 1] = values_tmp.var(axis=1)
+				if self.use_min_max:
+					values[i_group, :, 1] = values_tmp.min(axis=1)
+					values[i_group, :, 2] = values_tmp.max(axis=1)
+				else:
+					values[i_group, :, 1] = values_tmp.var(axis=1)
+
+			except KeyError:
+				print('Errors Occurr. Give up plotting label %s from group %s' % (lbl, k) )
 			
 
 		fig, ax = plt.subplots(len(label_names), 1, sharex=True)

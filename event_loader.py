@@ -26,15 +26,11 @@ class event_loader():
 
             path_list, simple_path = self._search_folder(self.rootpath+curr_path, curr_alias)
 
-            
             for p, n in zip(path_list, simple_path):
                 if regex.search(n) is not None: 
                     pathes.append(p)
                     aliases.append(n)
                     groups.append(curr_alias)
-                    # if 'mlp_mono' in n: groups.append('mono')
-                    # elif 'mlp_bino' in n: groups.append('bino')
-                    # else: groups.append('else')
 
         self.pathes = pathes.copy()
         self.aliases = aliases.copy()
@@ -47,26 +43,31 @@ class event_loader():
         regex = re.compile(tags_regex)
         odict = OrderedDict()
         
-        for event_path, event_aliases, event_group in zip(self.pathes, self.aliases, self.groups):
+        removed_event_idx = []
+        for i_event, (event_path, event_aliases, event_group) in enumerate(zip(self.pathes, self.aliases, self.groups)):
             print('Loading %s of group %s' % (event_aliases, event_group))
             odict[event_aliases] = {'start_time': None, 'data': {}, 'event_path': event_path, 'groups': event_group}
-            for i, event in enumerate(tf.compat.v1.train.summary_iterator(event_path)):
-                if i == 0: odict[event_aliases]['start_time'] = event.wall_time
-                elif i % down_sample == 0:
-                    for value in event.summary.value:
-                        if regex.search(value.tag) is not None:
-                            if event.step not in odict[event_aliases]['data'].keys():
-                                odict[event_aliases]['data'][event.step] = {}
-                                odict[event_aliases]['data'][event.step]['wall_time'] = event.wall_time
-                                odict[event_aliases]['data'][event.step]['relative'] = event.wall_time - odict[event_aliases]['start_time']
-                            odict[event_aliases]['data'][event.step][value.tag] = value.simple_value
+            try:
+                for i, event in enumerate(tf.compat.v1.train.summary_iterator(event_path)):
+                    if i == 0: odict[event_aliases]['start_time'] = event.wall_time
+                    elif i % down_sample == 0:
+                        for value in event.summary.value:
+                            if regex.search(value.tag) is not None:
+                                if event.step not in odict[event_aliases]['data'].keys():
+                                    odict[event_aliases]['data'][event.step] = {}
+                                    odict[event_aliases]['data'][event.step]['wall_time'] = event.wall_time
+                                    odict[event_aliases]['data'][event.step]['relative'] = event.wall_time - odict[event_aliases]['start_time']
+                                odict[event_aliases]['data'][event.step][value.tag] = value.simple_value
 
-            odict[event_aliases]['data'] = pd.DataFrame.from_dict(odict[event_aliases]['data'], orient='index')
-            # print(odict[event_aliases]['data'])
-            # print(odict[event_aliases]['data'].isnull().sum())
-            odict[event_aliases]['data'] = odict[event_aliases]['data'].interpolate(**interpolation_kwargs)
-            # print(odict[event_aliases]['data'])
-            # print(odict[event_aliases]['data'].isnull().sum())
+                odict[event_aliases]['data'] = pd.DataFrame.from_dict(odict[event_aliases]['data'], orient='index').interpolate(**interpolation_kwargs)
+
+            except tf.errors.DataLossError as e:
+                removed_event_idx.append(i_event)
+                print('Error Occured. Give up loading events:', event_path)
+                print('Error message:', e)
+
+        for i in removed_event_idx[::-1]:
+            del self.pathes[i], self.aliases[i], self.groups[i]
         
         return odict
             
