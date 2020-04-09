@@ -20,9 +20,10 @@ For further information, please refer to [this page](https://pandas.pydata.org/p
 
 ## Example
 * `python3 main.py --rootpath /path/to/simulations/ --logdir 0404:sim0404,0406:sim0406 --regex "train" --tags "performance" -y --use_min_max --save_data tmp --moving_average 0.9 --title performances`
+![example1](https://github.com/showaykerker/tensorboard2matplot/blob/master/assets/example1.png)
 
 * `python3 main.py --rootpath /path/to/simulations/ --logdir 0404:sim0404,0406:sim0406 --regex --tags "performance" --load_data tmp.pkl --moving_average 0.96 --title performances`
-
+![example2](https://github.com/showaykerker/tensorboard2matplot/blob/master/assets/example2.png)
 
 ## Arguments
 ``` python
